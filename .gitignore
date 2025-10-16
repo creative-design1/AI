@@ -1,0 +1,15 @@
+# checkpoint
+.ipynb_checkpoints/
+
+# dataset
+*.joblib
+*.pth
+*.npz
+*.npy
+*.csv
+*.save
+
+# dataset directories
+data/
+models/
+checkpoints/
