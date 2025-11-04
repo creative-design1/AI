@@ -1,0 +1,65 @@
+import time
+import cv2
+from pathlib import Path
+from extractor import PoseExtractor
+from sender import Sender
+from fall import Fall_Detector
+from features import compute_features
+
+BASE_DIR = Path.cwd().parent
+
+model_path = BASE_DIR / "models" / "best_fall_model.pth"
+scaler_path = BASE_DIR / "src" / "scaler.save"
+video_source = 0
+url = "http://172.30.1.37:8080"
+api_path = url + "/api/events/fall-detection"
+
+detector = Fall_Detector(model_path=model_path, scaler_path=scaler_path, device='cpu')
+extractor = PoseExtractor()
+sender = Sender(url=api_path)
+cap = cv2.VideoCapture("http://172.30.1.32:8080/video")
+
+if not cap.isOpened():
+    print("Error: Unable to open video source.")
+    exit(1)
+    
+print("starting fall detection!")
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("Error: Unable to read frame from video source.")
+        break
+    
+    keypoints = extractor.extract_keypoints(frame)
+    detector.update_sequence(keypoints)
+    
+    fall_detected, fall_prob = detector.predict()
+    
+    if len(detector.buffer) == detector.buffer.maxlen:
+        features = compute_features(list(detector.buffer), fps=30)
+    else:
+        features = {}
+        
+    if fall_detected:
+        data = {
+            "elderlyUserId": 1,
+            "fall_prob": fall_prob,
+            "fall_detected": fall_detected,
+            "detectedAt": "2024-06-01 12:00:00"
+            #"detectedAt": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        }
+            #"stride_mean": features.get("stride_mean", 0.0),
+            #"stride_std": features.get("stride_std", 0.0),
+            #"velocity": features.get("velocity", 0.0),
+        sender.send(data)
+        print(data)
+        print(f"Fall detected! Probability: {fall_prob:.2f}, Data sent.")
+        
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+    
+
+cap.release()
+cv2.destroyAllWindows()
+print("Fall detection stopped.")
