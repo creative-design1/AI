@@ -8,8 +8,12 @@
 *.npy
 *.csv
 *.save
+*.json
 
 # dataset directories
 data/
 models/
 checkpoints/
+
+# cache
+__pycache__/
