@@ -9,8 +9,6 @@ def stride_length(seq):
     stride_std = np.std(foot_dist)
     
     return stride_mean, stride_std
-    
-    pass
 
 
 def stride_velocity(seq, fps):
@@ -37,3 +35,4 @@ def compute_features(seq, fps):
         "stride_std": float(std_length),
         "velocity": float(velocity)
     }
+    

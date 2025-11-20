@@ -53,7 +53,7 @@ class Fall_Detector:
                 probs = torch.softmax(logits, dim=1)
                 fall_prob = probs[0][1].item()
                 
-            return fall_prob > 0.0, fall_prob
-            # return fall_prob > 0.75, fall_prob
+            #return fall_prob > 0.0, fall_prob
+            return fall_prob > 0.75, fall_prob
         return False, 0.0
     
