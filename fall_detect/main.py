@@ -6,21 +6,26 @@ from sender import Sender
 from fall import Fall_Detector
 from features import compute_features
 from walking import WalkingDetector
+#from chatbot import ChatBot
 
 BASE_DIR = Path.cwd().parent
 
 model_path = BASE_DIR / "models" / "best_fall_model.pth"
 scaler_path = BASE_DIR / "src" / "scaler.save"
 video_source = 0
-url = None #"http://172.30.1.37:8080"
-api_path = None #url + "/api/events/fall-detection"
+url = "http://192.168.1.50:8080"
+fall_api_path = url + "/api/events/fall-detection"
+stride_api_path = url + "/api/events/features"
+audio_source = None #url + "/audio.opus"
 
 detector = Fall_Detector(model_path=model_path, scaler_path=scaler_path, device='cpu')
 extractor = PoseExtractor()
-sender = Sender(url=api_path)
+#fall_sender = Sender(url=fall_api_path)
+#stride_sender = Sender(url=stride_api_path)
 walk = WalkingDetector()
+#chatbot = ChatBot(rstp_url=audio_source)
 
-cap = cv2.VideoCapture("http://192.168.0.3:8080/video")
+cap = cv2.VideoCapture("http://10.93.152.178:8080/?action=stream")
 
 if not cap.isOpened():
     print("Error: Unable to open video source.")
@@ -28,7 +33,11 @@ if not cap.isOpened():
     
 print("starting fall detection!")
 
+#chatbot.start()
+#print("ChatBot started.")
+
 sent_fall = False
+missing_count = 0
 
 while True:
     ret, frame = cap.read()
@@ -38,6 +47,19 @@ while True:
     
     features = None
     keypoints = extractor.extract_keypoints(frame)
+    if not walk.detect_person(keypoints) or keypoints is None:
+        #print("No person detected.")
+        missing_count += 1
+        if missing_count >= 10:
+            detector.buffer.clear()
+            walk.reset()
+            sent_fall = False
+            
+        continue
+    else:
+        missing_count = 0
+        #print("Person detected.")
+        
     walking = walk.update(keypoints)
     detector.update_sequence(keypoints)
     
@@ -69,7 +91,7 @@ while True:
                 #"stride_mean": features.get("stride_mean", 0.0),
                 #"stride_std": features.get("stride_std", 0.0),
                 #"velocity": features.get("velocity", 0.0),
-            #sender.send(data)
+            #fall_sender.send(data)
             print(f"Fall detected! Probability: {fall_prob:.2f}, Data sent.")
             sent_fall = True
         
@@ -81,7 +103,13 @@ while True:
     if not fall_detected and walking is not None:
         features = compute_features(list(walking), fps=30)
         print(features)
-        
+        features = {
+            "elderyUserId": 1,
+            "stride_mean": features["stride_mean"],
+            "stride_std": features["stride_std"],
+            "velocity": features["velocity"]
+        }
+        #stride_sender.send(features)
         
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
