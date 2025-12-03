@@ -11,6 +11,8 @@
 *.json
 *.jpg
 *.png
+*.bin
+*.m4a
 
 # dataset directories
 data/
