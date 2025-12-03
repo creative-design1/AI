@@ -9,6 +9,8 @@
 *.csv
 *.save
 *.json
+*.jpg
+*.png
 
 # dataset directories
 data/

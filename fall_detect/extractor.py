@@ -20,6 +20,9 @@ class PoseExtractor:
             
             if results.pose_landmarks:
                 for i, lm in enumerate(results.pose_landmarks.landmark):
+                    
+                    if lm.visibility < 0.1:
+                        continue
                     kp[i] = [lm.x, lm.y, lm.z, lm.visibility]
                     # visibility가 임계점보다 낮으면 0으로 채우는 방안 (또는 이전 프레임으로 보간하는 방법도 가능)
                     # if  v < visibility_threshold:
