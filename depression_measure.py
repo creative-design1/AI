@@ -11,7 +11,7 @@ class depressionProcessor(threading.Thread):
     def __init__(self, depression_queue, url):
         super().__init__()
         self.depression_queue = depression_queue
-        self.sender = Sender(url=url)
+        self.sender = Sender(url=url + "/api/events/depression")
         self._stop = threading.Event()
         self.daemon = True
         

@@ -9,7 +9,7 @@ from conversation.llm import LLM
 from conversation.tts import TTS
 import subprocess
 
-url = "http://10.93.152.178:8554/audio_stream"
+#url = "http://10.93.152.178:8554/audio_stream"
 
 def play_m4a_to_queue(audio_queue, m4a_path, sample_rate=16000):
     """
@@ -81,7 +81,7 @@ def main():
     #feeder.start()
     
     time.sleep(3)
-    #reply_queue.put("안녕하세요. 테스트 음성 출력입니다.")
+    reply_queue.put("안녕하세요. 테스트 음성 출력입니다.")
     try:
         while True:
             time.sleep(1)

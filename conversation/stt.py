@@ -114,8 +114,7 @@ class STT:
                     except: pass
 
                 if text and len(text) > 1:
-                    self.recorder.mute = True
-                    print("audio mute")
+                    self.recorder.set_mute(True)
                     print("STT ->", text)
                     try:
                         self.text_queue.put_nowait(text)

@@ -103,6 +103,7 @@ class AudioRecorder(threading.Thread):
         
     def set_mute(self, mute):
         self.mute = mute
+        print("뮤트 설정: ", mute)
         
     def stop(self):
         self._stop.set()

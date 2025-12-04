@@ -6,11 +6,12 @@ import queue
 
 class SpingData:
     
-    def __init__(self, reply_queue, depression_queue):
+    def __init__(self, reply_queue, depression_queue, url):
         self.reply_queue = reply_queue
         self.depression_queue = depression_queue
         self.ws = None
         self.thread = None
+        self.url = url
         
     def on_message(self, ws, message):
         received_data = json.loads(message)

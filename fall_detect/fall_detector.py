@@ -8,8 +8,6 @@ from features import compute_features
 from walking import WalkingDetector
 import threading
 
-BASE_URL = "http://192.168.1.50:8080"
-VIDEO_URL = "http://10.93.152.178:8080/?action=stream"
 
 """
 BASE_DIR = Path.cwd().parent
@@ -126,7 +124,7 @@ print("Fall detection stopped.")
 
 class FallDetectionWorker(threading.Thread):
     
-    def __init__(self, base_url=BASE_URL, video_source=VIDEO_URL):
+    def __init__(self, base_url=None, video_source=None):
         super().__init__()
         self._stop = threading.Event()
         self.daemon = True
