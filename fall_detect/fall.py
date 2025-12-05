@@ -54,6 +54,6 @@ class Fall_Detector:
                 fall_prob = probs[0][1].item()
                 
             #return fall_prob > 0.0, fall_prob
-            return fall_prob > 0.4, fall_prob
+            return fall_prob > 0.75, fall_prob
         return False, 0.0
     

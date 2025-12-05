@@ -1,11 +1,11 @@
 import time
 import cv2
 from pathlib import Path
-from extractor import PoseExtractor
-from sender import Sender
-from fall import Fall_Detector
-from features import compute_features
-from walking import WalkingDetector
+from .extractor import PoseExtractor
+from .sender import Sender
+from .fall import Fall_Detector
+from .features import compute_features
+from .walking import WalkingDetector
 import threading
 
 

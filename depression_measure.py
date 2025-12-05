@@ -37,7 +37,7 @@ class depressionProcessor(threading.Thread):
                     self.device,
                     daily_text_list
                 )
-                
+                depression_avg_score = depression_avg_score * 100.0
                 data = {
                     "elderyUserId": 1,
                     "depression_score": depression_avg_score

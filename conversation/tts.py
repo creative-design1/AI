@@ -8,7 +8,7 @@ from playsound import playsound
 import socket
 
 
-RPI_IP = "10.93.152.178"
+RPI_IP = "10.138.18.178"
 RPI_PORT = 12345
 
 class TTS(threading.Thread):

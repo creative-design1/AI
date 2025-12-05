@@ -1,6 +1,6 @@
 import numpy as np
 from collections import deque
-from extractor import PoseExtractor
+from .extractor import PoseExtractor
 
 class WalkingDetector:
     def __init__(self):

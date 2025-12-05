@@ -27,7 +27,7 @@ class STT:
         self.sample_rate = sample_rate
         self.recorder = recorder
         
-        self.vad = webrtcvad.Vad(3)  # 민감도 높임
+        self.vad = webrtcvad.Vad(2)  # 민감도 높임
         self.frame_ms = 20
         self.frame_size = int(self.sample_rate * self.frame_ms / 1000)
 
@@ -41,12 +41,17 @@ class STT:
         
         self.amplitude_threshold = 0.01
         
+        self.speech = False
+        
     def is_speech(self, pcm16):
         if len(pcm16) < self.frame_size:
+            print("len false")
             return False
         frame = pcm16[:self.frame_size]
 
-        return self.vad.is_speech(frame.tobytes(), self.sample_rate)
+        boole = self.vad.is_speech(frame.tobytes(), self.sample_rate)
+        print(boole)
+        return boole
         
     def run(self):
         print("STT started")
@@ -60,23 +65,29 @@ class STT:
             pcm16 = (arr * 32768).astype(np.int16)
             self.buffer.append(pcm16)
             
-            if self.is_speech(self.buffer):
+            if self.is_speech(pcm16):
                 self.speech_count += 1
                 self.silence_count = 0
+                self.speech = True
             else:
                 self.silence_count += 1
             
             total_samples = sum(len(chunk) for chunk in self.buffer)
             
             if self.silence_count >= self.silence_limit and total_samples >= self.min_length_samples:
-            
+                if not self.speech:
+                    self.buffer = []
+                    self.silence_count = 0
+                    self.speech_count = 0
+                    continue
+                self.speech = False
                 merged = np.concatenate(self.buffer)
                 self.buffer = []
                 self.silence_count = 0
                 self.speech_count = 0
                 
-                if np.max(np.abs(merged)) < self.amplitude_threshold:
-                    continue
+                #if np.max(np.abs(merged)) < self.amplitude_threshold:
+                #    continue
                 
                 # write tmp wav
                 tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)  
@@ -112,11 +123,14 @@ class STT:
                 finally:
                     try: os.remove(tmpname)
                     except: pass
-
-                if text and len(text) > 1:
+                print(text)
+                if text and len(text) > 1 and "지니" in text:
                     self.recorder.set_mute(True)
                     print("STT ->", text)
                     try:
                         self.text_queue.put_nowait(text)
                     except queue.Full:
+                        self.recorder.set_mute(False)
                         pass
+                else:
+                    text = ""

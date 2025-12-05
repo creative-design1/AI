@@ -1,10 +1,11 @@
+
 import websocket
 import json
 import threading
 import queue
 
 
-class SpingData:
+class SpringData:
     
     def __init__(self, reply_queue, depression_queue, url):
         self.reply_queue = reply_queue
@@ -16,6 +17,7 @@ class SpingData:
     def on_message(self, ws, message):
         received_data = json.loads(message)
         if "reminders" in received_data:
+            print(received_data)
             self.reply_queue.put_nowait(received_data["reminders"][1])
         else:
             daily_text = received_data["text"]
@@ -25,7 +27,7 @@ class SpingData:
         print("웹소켓 에러: ", error)
         
     def on_close(self, ws, close_status_code, close_msg):
-        print("웹소켓 종료: [{close_status_code}] {close_msg}")
+        print(f"웹소켓 종료: [{close_status_code}] {close_msg}")
         
     def on_open(self, ws):
         print("웹소켓 연결")
