@@ -5,12 +5,20 @@ import tempfile
 import os
 from gtts import gTTS
 from playsound import playsound
+import socket
 
-class TTS:
+
+RPI_IP = "10.138.18.178"
+RPI_PORT = 12345
+
+class TTS(threading.Thread):
     def __init__(self, reply_queue: queue.Queue, recorder: object = None):
+        super().__init__()
         self.queue = reply_queue
         #self.engine = pyttsx3.init()
         self.recorder = recorder  # AudioRecorder 인스턴스 (mute 제어 위해)
+        self._stop = threading.Event()
+        self.daemon = True
 
         # pyttsx3 설정(옵션)
         #self.engine.setProperty('rate', 150)  # 속도
@@ -51,30 +59,32 @@ class TTS:
     """
     
     def _speak(self, text):
-        # 임시 mp3 파일 생성
-        tmp_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-        tmp_path = tmp_file.name
-        tmp_file.close()
-
+        text_len = len(text)
+        wait_time = max(1.0, text_len * 0.22) + 0.5
         try:
-            tts = gTTS(text=text, lang="ko")
-            tts.save(tmp_path)
-            playsound(tmp_path)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((RPI_IP, RPI_PORT))
+                
+                s.sendall(text.encode('utf-8'))
+            print("전송완료")
+            time.sleep(wait_time)
+            return True
+        except ConnectionRefusedError:
+            print("서버 에러")
+            return False
         except Exception as e:
-            print("TTS error:", e)
+            print("error: ", e)
+            return False
         finally:
-            try:
-                os.remove(tmp_path)
-            except:
-                pass
-        self.recorder.mute = False
-        print("audio run")
+            self.recorder.set_mute(False)
 
     def run(self):
         print("TTSWorker: started")
-        while True:
-            text = self.queue.get()
-            if not text:
+        while not self._stop.is_set():
+            try:
+                text = self.queue.get(timeout=0.5)
+            except queue.Empty:
                 continue
             print("TTS ->", text)
             self._speak(text)
+            self.queue.task_done()

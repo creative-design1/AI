@@ -11,7 +11,7 @@ class depressionProcessor(threading.Thread):
     def __init__(self, depression_queue, url):
         super().__init__()
         self.depression_queue = depression_queue
-        self.sender = Sender(url=url)
+        self.sender = Sender(url=url + "/api/events/depression")
         self._stop = threading.Event()
         self.daemon = True
         
@@ -37,7 +37,7 @@ class depressionProcessor(threading.Thread):
                     self.device,
                     daily_text_list
                 )
-                
+                depression_avg_score = depression_avg_score * 100.0
                 data = {
                     "elderyUserId": 1,
                     "depression_score": depression_avg_score

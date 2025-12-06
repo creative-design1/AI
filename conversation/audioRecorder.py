@@ -70,28 +70,61 @@ class AudioRecorder(threading.Thread):
         # 노트북의 UDP 포트
         self.bind_port = bind_port
         self.sample_rate = sample_rate
+        self.frame_size = 320
         self._stop = threading.Event()
         self.daemon = True
         self.mute = False
+        
+        self._temp_buffer = b''
+    def clear_queue(self):
+        """큐를 비우는 헬퍼 메서드"""
+        while True:
+            try:
+                # 항목을 가져옵니다. 큐가 비어있으면 예외가 발생합니다.
+                self.audio_queue.get_nowait()
+            except queue.Empty:
+                # 큐가 비었으므로 루프를 종료합니다.
+                break
 
     def run(self):
+        min_bytes = self.frame_size * 2
         # UDP 소켓 생성 및 포트 바인딩
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             # 0.0.0.0 주소의 8554 포트를 열고 수신 대기
             s.bind(('0.0.0.0', self.bind_port))
             print(f"[UDP-RX] UDP Listener started on port {self.bind_port}...")
-
+            
             while not self._stop.is_set():
+                long = False
                 try:
                     # UDP 데이터 수신 (4096 bytes 청크)
                     data, addr = s.recvfrom(4096)
                     
                     if data:
                         if self.mute:
+                            print("mute = true")
+                            data = None
                             continue
                         # 데이터 수신 성공! NumPy 변환 및 큐에 삽입 (기존 로직 유지)
-                        audio = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
                         
+                        self._temp_buffer += data
+                        
+                        #print("오디오레코더" + len(self._temp_buffer))
+                        while len(self._temp_buffer) >= min_bytes:
+                            long = False
+                            chunk_bytes = len(self._temp_buffer)
+                            if len(self._temp_buffer) >= 4096:
+                                chunk_data = self._temp_buffer[:4096]
+                                self._temp_buffer = self._temp_buffer[4096:]
+                                long = True
+                            else:
+                                # 4096 bytes를 확보하지 못하면 다음 수신을 기다림
+                                long = False
+                                break
+                            
+                            audio = np.frombuffer(chunk_data, dtype=np.int16).astype(np.float32) / 32768.0
+                        if not long:
+                            continue
                         try:
                             self.audio_queue.put_nowait(audio)
                         except queue.Full:
@@ -103,6 +136,9 @@ class AudioRecorder(threading.Thread):
         
     def set_mute(self, mute):
         self.mute = mute
+        print("뮤트 설정: ", mute)
+        if mute:
+            self.clear_queue()
         
     def stop(self):
         self._stop.set()
